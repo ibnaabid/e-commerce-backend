@@ -54,10 +54,49 @@ async function run() {
 
 
         // Get All Products
-        app.get("/products", async (req, res) => {
-            const result = await productsCollection.find().toArray();
-            res.send(result);
-        });
+  // 🟢 GET: Fetch products with Category Filter & Search query
+app.get("/products", async (req, res) => {
+  try {
+    const { category, search } = req.query;
+
+    let query = {};
+
+    // 1. Category Filtering
+    if (category && category.toLowerCase() !== "all") {
+      const categoryRegex = new RegExp(`^${category.trim()}$`, "i"); // Case-insensitive exact match
+      
+      query.$or = [
+        { categories: { $in: [categoryRegex] } }, // অ্যারে ফিল্ডের জন্য (যেমন: ["bamboo"])
+        { category: categoryRegex }              // সাধারণ স্ট্রিং ফিল্ডের জন্য
+      ];
+    }
+
+    // 2. Search Query (অপশনাল)
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      const searchFilter = {
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex }
+        ]
+      };
+
+      if (query.$or) {
+        query = { $and: [query, searchFilter] };
+      } else {
+        query = searchFilter;
+      }
+    }
+
+    const products = await productsCollection.find(query).toArray();
+    res.status(200).send(products);
+
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).send({ message: "Failed to fetch products", error: err.message });
+  }
+});
+
 
         // Get Single Product
         app.get("/products/:id", async (req, res) => {
