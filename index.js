@@ -23,8 +23,6 @@ const client = new MongoClient(uri, {
     },
 });
 
-async function run() {
-    try {
         await client.connect();
         console.log("✅ Connected to MongoDB");
 
@@ -397,29 +395,6 @@ app.delete("/cart/:id", async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // ===========================================================
 
         // Home Route
@@ -427,16 +402,12 @@ app.delete("/cart/:id", async (req, res) => {
             res.send("🌱 Eco World Server Running...");
         });
 
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("✅ MongoDB Ping Successful");
 
-    } catch (err) {
-        console.error("MongoDB Connection Error:", err);
-    }
-}
-
-run().catch(console.dir);
-
-app.listen(port, () => {
-    console.log(`🚀 Server Running on Port ${port}`);
+  
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`);
 });
+
+module.exports=app
