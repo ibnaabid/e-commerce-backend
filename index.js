@@ -34,13 +34,64 @@ async function run() {
         
 const cartsCollection = db.collection("carts");
 const wishlistCollection = db.collection("favorite")
-        
-         // ← Correct name
+        const reviewsCollection = db.collection("reviews")
 
-        //  alll wishlist 
-        // ==========================================
-// 💖 WISHLIST / FAVORITE ROUTES
+     // ==========================================
+// ⭐ CUSTOMER REVIEWS ROUTES
 // ==========================================
+app.post("/reviews", async (req, res) => {
+      try {
+        const { productId, userEmail, userName, userImage, rating, comment } = req.body;
+
+        // Validation
+        if (!userEmail) {
+          return res.status(400).send({ message: "User Email is required" });
+        }
+
+        if (!rating || rating < 1 || rating > 5) {
+          return res.status(400).send({ message: "Rating must be between 1 and 5" });
+        }
+
+        if (!comment || comment.trim() === "") {
+          return res.status(400).send({ message: "Comment cannot be empty" });
+        }
+
+        // Object structure
+        const newReview = {
+          productId: productId || "general-site-review",
+          userEmail,
+          userName: userName || "Anonymous User",
+          userImage: userImage || "",
+          rating: Number(rating),
+          comment: comment.trim(),
+          createdAt: new Date(),
+        };
+
+        const result = await reviewsCollection.insertOne(newReview);
+        res.status(201).send({ message: "Review added successfully", result });
+      } catch (err) {
+        res.status(500).send({ message: "Failed to post review", error: err.message });
+      }
+    });
+
+    // ===================================================
+    // 2. GET /reviews - সব রিভিউ ফেচ করার API (সর্বশেষ রিভিউ আগে আসবে)
+    // ===================================================
+    app.get("/reviews", async (req, res) => {
+      try {
+        // createdAt অনুযায়ী ডিসেন্ডিং সর্ট (নতুনগুলো আগে)
+        const reviews = await reviewsCollection
+          .find()
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.status(200).send(reviews);
+      } catch (err) {
+        res.status(500).send({ message: "Failed to fetch reviews", error: err.message });
+      }
+    });
+
+
 
 // 1. Toggle Wishlist (Add or Remove)
 app.post("/wishlist", async (req, res) => {
