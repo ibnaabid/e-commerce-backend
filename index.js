@@ -180,21 +180,25 @@ const client = new MongoClient(uri, {
     // ==========================================
     // ⭐ PRODUCTS ROUTES
     // ==========================================
-    app.get("/products", async (req, res) => {
+ app.get("/products", async (req, res) => {
       try {
         const { category, search } = req.query;
         let query = {};
 
-        if (category && category.toLowerCase() !== "all") {
+        // 🔍 Category Filter Handling
+        if (category && category.trim() !== "" && category.toLowerCase() !== "all") {
           const categoryRegex = new RegExp(`^${category.trim()}$`, "i");
           query.$or = [
-            { categories: { $in: [categoryRegex] } },
             { category: categoryRegex },
+            { categories: { $in: [categoryRegex] } },
+            // Schema তে যদি 'Bamboo' ছোট হাতের বা অন্য নামে থাকে
+            { category: category.trim() }, 
           ];
         }
 
-        if (search) {
-          const searchRegex = new RegExp(search, "i");
+        // 🔍 Search Filter Handling
+        if (search && search.trim() !== "") {
+          const searchRegex = new RegExp(search.trim(), "i");
           const searchFilter = {
             $or: [{ name: searchRegex }, { description: searchRegex }],
           };
@@ -214,6 +218,8 @@ const client = new MongoClient(uri, {
       }
     });
 
+
+    
     app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
       const result = await productsCollection.findOne({ _id: new ObjectId(id) });
