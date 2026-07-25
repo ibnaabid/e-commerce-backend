@@ -271,60 +271,62 @@ const client = new MongoClient(uri, {
 
     // ==========================================
     // ⭐ CART ROUTES
-    // ==========================================
-    app.post("/cart", async (req, res) => {
-      try {
-        const item = req.body;
+   app.post("/cart", async (req, res) => {
+  try {
+    const item = req.body;
+    
+    // email অথবা userEmail দুইটার যেকোনো একটা পেলেই একসেপ্ট করবে
+    const userEmail = item.userEmail || item.email;
 
-        if (!item?.userEmail) {
-          return res.status(400).send({ message: "User email is required to add items" });
-        }
+    if (!userEmail) {
+      return res.status(400).send({ message: "User email is required to add items" });
+    }
 
-        if (!item?.productId) {
-          return res.status(400).send({ message: "Product ID is required" });
-        }
+    if (!item?.productId) {
+      return res.status(400).send({ message: "Product ID is required" });
+    }
 
-        const price = Number(item.price) || 0;
+    const price = Number(item.price) || 0;
 
-        const existingItem = await cartsCollection.findOne({
-          productId: item.productId,
-          userEmail: item.userEmail,
-        });
-
-        if (existingItem) {
-          const updatedQuantity = (existingItem.quantity || 1) + 1;
-          const updatedTotalPrice = price * updatedQuantity;
-
-          const result = await cartsCollection.updateOne(
-            { _id: existingItem._id },
-            {
-              $set: {
-                quantity: updatedQuantity,
-                totalPrice: updatedTotalPrice,
-                updatedAt: new Date(),
-              },
-            }
-          );
-          return res.send(result);
-        }
-
-        const newItem = {
-          productId: item.productId,
-          name: item.name,
-          price: price,
-          quantity: 1,
-          totalPrice: price * 1,
-          image: item.image || "",
-          userEmail: item.userEmail,
-          createdAt: new Date(),
-        };
-
-        const result = await cartsCollection.insertOne(newItem);
-        res.status(201).send(result);
-      } catch (err) {
-        res.status(500).send({ message: "Failed to add to cart", error: err.message });
-      }
+    const existingItem = await cartsCollection.findOne({
+      productId: item.productId,
+      userEmail: userEmail,
     });
+
+    if (existingItem) {
+      const updatedQuantity = (existingItem.quantity || 1) + 1;
+      const updatedTotalPrice = price * updatedQuantity;
+
+      const result = await cartsCollection.updateOne(
+        { _id: existingItem._id },
+        {
+          $set: {
+            quantity: updatedQuantity,
+            totalPrice: updatedTotalPrice,
+            updatedAt: new Date(),
+          },
+        }
+      );
+      return res.send(result);
+    }
+
+    const newItem = {
+      productId: item.productId,
+      name: item.name,
+      price: price,
+      quantity: 1,
+      totalPrice: price * 1,
+      image: item.image || "",
+      userEmail: userEmail,
+      createdAt: new Date(),
+    };
+
+    const result = await cartsCollection.insertOne(newItem);
+    res.status(201).send(result);
+  } catch (err) {
+    res.status(500).send({ message: "Failed to add to cart", error: err.message });
+  }
+});
 
     app.get("/cart", async (req, res) => {
       try {
